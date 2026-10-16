@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Volume Multiplier: CC7 vs CC11</title>
+    <style>
+        /* Coursera-inspired Academic UI */
+        :root {
+            --primary-blue: #0056D2;
+            --primary-hover: #00419e;
+            --ceiling-color: #D93025; /* Red for Ceiling limit */
+            --bg-page: #FFFFFF;
+            --bg-panel: #F5F7FA;
+            --text-main: #1F2431;
+            --text-muted: #63636B;
+            --border-color: #E2E6EA;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text-main);
+            background-color: var(--bg-page);
+            line-height: 1.5;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .simulator-container {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .description {
+            color: var(--text-main);
+            margin-bottom: 2rem;
+            background: #e9eef4;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        /* Dashboard & Visuals */
+        .visual-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+        .meter-container {
+            position: relative;
+            width: 80px;
+            height: 250px;
+            background: #111;
+            border-radius: 6px;
+            border: 2px solid var(--text-main);
+            margin-bottom: 1.5rem;
+        }
+
+        .meter-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--primary-blue);
+            height: 100%;
+            transition: height 0.1s ease-out;
+        }
+
+        .meter-ceiling {
+            position: absolute;
+            bottom: 100%; /* Will be updated by JS */
+            left: -15px;
+            width: 110px;
+            height: 4px;
+            background-color: var(--ceiling-color);
+            z-index: 10;
+            transition: bottom 0.1s ease-out;
+        }
+
+        .meter-ceiling::after {
+            content: 'CEILING';
+            position: absolute;
+            right: -60px;
+            top: -6px;
+            font-size: 0.75rem;
+            color: var(--ceiling-color);
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+        .math-display {
+            font-family: monospace;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-main);
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .formula-breakdown {
+            font-size: 1rem;
+            color: var(--text-muted);
+            font-family: monospace;
+            text-align: center;
+        }
+
+        /* Controls Grid */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem 2rem;
+            background: var(--bg-page);
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+
+        .value-display {
+            font-weight: bold;
+            color: var(--primary-blue);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin: 0.5rem 0;
+            cursor: pointer;
+        }
+
+        @media (max-width: 600px) {
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="simulator-container">
+        <h2>The Volume Multiplier: CC7 vs. CC11</h2>
+        
+        <div class="description">
+            <strong>Goal:</strong> Understand the hierarchy between Main Volume and Expression.<br><br>
+            <strong>Try this:</strong> Set CC7 (Main Volume) to 64. Then move CC11 (Expression) to maximum (127). Notice that your Final Volume cannot exceed the ceiling set by CC7.
+        </div>
+
+        <div class="visual-panel">
+            <div class="meter-container">
+                <div class="meter-fill" id="meter-fill"></div>
+                <div class="meter-ceiling" id="meter-ceiling"></div>
+            </div>
+            
+            <div class="math-display" id="math-display">
+                Final Volume: 100.0%
+            </div>
+            <div class="formula-breakdown" id="formula-breakdown">
+                (127 ÷ 127) × (127 ÷ 127) = 1.00
+            </div>
+        </div>
+
+        <div class="controls-grid">
+            <div class="control-group">
+                <label for="cc7-slider">
+                    CC7: Main Volume (Ceiling)
+                    <span class="value-display" id="cc7-display">127</span>
+                </label>
+                <input type="range" id="cc7-slider" min="0" max="127" value="127" aria-label="CC7 Main Volume">
+            </div>
+
+            <div class="control-group">
+                <label for="cc11-slider">
+                    CC11: Expression (Dynamics)
+                    <span class="value-display" id="cc11-display">127</span>
+                </label>
+                <input type="range" id="cc11-slider" min="0" max="127" value="127" aria-label="CC11 Expression">
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // DOM Elements
+        const cc7Slider = document.getElementById('cc7-slider');
+        const cc11Slider = document.getElementById('cc11-slider');
+        const cc7Display = document.getElementById('cc7-display');
+        const cc11Display = document.getElementById('cc11-display');
+        
+        const meterFill = document.getElementById('meter-fill');
+        const meterCeiling = document.getElementById('meter-ceiling');
+        const mathDisplay = document.getElementById('math-display');
+        const formulaBreakdown = document.getElementById('formula-breakdown');
+
+        // Main logic function
+        function updateVisuals() {
+            // Get current slider values
+            const cc7 = parseInt(cc7Slider.value);
+            const cc11 = parseInt(cc11Slider.value);
+            
+            // Calculate math
+            const cc7Percent = cc7 / 127;
+            const cc11Percent = cc11 / 127;
+            const finalMultiplier = cc7Percent * cc11Percent;
+            const finalPercentVisual = finalMultiplier * 100;
+            
+            // Update UI text
+            cc7Display.textContent = cc7;
+            cc11Display.textContent = cc11;
+            
+            // Update UI visuals
+            // The ceiling line is drawn based on CC7's percentage
+            meterCeiling.style.bottom = `${cc7Percent * 100}%`;
+            // The blue fill is drawn based on the final calculated percentage
+            meterFill.style.height = `${finalPercentVisual}%`;
+            
+            // Update Math readouts
+            mathDisplay.textContent = `Final Volume: ${finalPercentVisual.toFixed(1)}%`;
+            formulaBreakdown.textContent = `(${cc7} ÷ 127) × (${cc11} ÷ 127) = ${finalMultiplier.toFixed(2)}`;
+        }
+
+        // Event Listeners
+        cc7Slider.addEventListener('input', updateVisuals);
+        cc11Slider.addEventListener('input', updateVisuals);
+
+        // Initialize on load
+        updateVisuals();
+    </script>
+</body>
+</html>
